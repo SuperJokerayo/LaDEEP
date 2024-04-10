@@ -45,7 +45,8 @@ class Characteristic_Line_Reverser(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        x = self.relu(self.conv1(x))
+        # x = self.relu(self.conv1(x))
+        x = self.conv1(x)
         x = x.transpose(1, 2)
         x = self.relu(self.conv2(x))
         x = self.relu(self.conv3(x))
