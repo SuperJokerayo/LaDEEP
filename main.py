@@ -4,33 +4,18 @@ import numpy as np
 
 import torch
 import torch.optim as optim
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from PIL import Image
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 
 from core.data_loader import LaDEEP_DataLoader
 from core.ladeep import LaDEEP
+from core.losses import loss_p, loss_r
 
 from utils.tensorboard_logging import Tensorboard_Logging
 from utils.diff_recover import diff_recover
-
-def loss_p(springback, prediction, coordinate_weights):
-    loss = 0
-    for i in range(3):
-        loss += torch.mean(torch.norm(springback[:, i] - prediction[:, i], 2, 1)) * coordinate_weights[i]
-    return loss
-
-def loss_r(section, recovery, kl_weight = 0.00025):
-    recover_section, mean, logvar = recovery
-    recons_loss = F.mse_loss(section, recover_section)
-    kl_loss = torch.mean(
-        -0.5 * torch.sum(1 + logvar - mean ** 2 - torch.exp(logvar), 1), 0)
-    loss = recons_loss + kl_loss * kl_weight
-    return loss
 
 def train(train_dataloader, eval_dataloader, device, exp_name, tl_writer):
 
@@ -49,11 +34,6 @@ def train(train_dataloader, eval_dataloader, device, exp_name, tl_writer):
     checkpoint_save_path = f"./checkpoints/{exp_name}"
     if not os.path.exists(checkpoint_save_path):
         os.mkdir(checkpoint_save_path)
-
-    # epochs = 600
-    # lr_p, lr_r = 0.001, 0.001
-    # weight_decay_p, weight_decay_r = 5e-5, 5e-5
-    # torch.cuda.manual_seed(3407)
 
     torch.cuda.manual_seed(seed)
 
@@ -315,11 +295,7 @@ def test(data_path, test_dataloader, device, exp_name, tl_writer):
     logging.info(f"min_sample_mean_test_dist_p: {min_sample_mean_test_dist_p}")
 
 def main():
-    mode = "train"
-    # mode_id = 1
     exp_name = f"{mode}_{mode_id}"
-
-    # device_id = 0
     device = torch.device(f"cuda:{device_id}" if torch.cuda.is_available() else "cpu")
 
     logs_dir = f"./logs/{exp_name}/"
@@ -333,8 +309,6 @@ def main():
                         datefmt = '%m-%d %H:%M',
                         filename = os.path.join(logs_dir, "log.log"),
                         filemode = 'w')
-
-    # data_path = "/mnt/data/tao_shilong/DataBase/e2e_model_data"
 
     strip_path = os.path.join(data_path, "original_strip_line")
     mould_path =  os.path.join(data_path, "mould_line")
