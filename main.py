@@ -176,8 +176,9 @@ def test(data_path, test_dataloader, device, exp_name, tl_writer):
 
 
     net = LaDEEP().to(device)
-    checkpoint_p_path = f"./checkpoints/{exp_name}/best_model_p.pth"
-    checkpoint_r_path = f"./checkpoints/{exp_name}/best_model_r.pth"
+    checkpoint_path = exp_name.replace("test", "train")
+    checkpoint_p_path = f"./checkpoints/{checkpoint_path}/best_model_p.pth"
+    checkpoint_r_path = f"./checkpoints/{checkpoint_path}/best_model_r.pth"
 
     parameters_p = torch.load(checkpoint_p_path, map_location = device)
     parameters_r = torch.load(checkpoint_r_path, map_location = device)
@@ -187,7 +188,7 @@ def test(data_path, test_dataloader, device, exp_name, tl_writer):
     print(len(net_parameters.keys()))
     print(len(parameters_p.keys()) + len(parameters_r.keys()))
 
-    for key in net.named_parameters().keys():
+    for key, _ in net.named_parameters():
         if key not in parameters_p.keys() and key not in parameters_r.keys():
             print(key)
     
@@ -219,7 +220,7 @@ def test(data_path, test_dataloader, device, exp_name, tl_writer):
         mean_test_loss_p /= len_test_datas
         mean_test_loss_r /= len_test_datas
 
-        logging.info(f"mean_test_loss_p: {mean_test_loss_p}  mean_test_loss_r{mean_test_loss_r}")
+        logging.info(f"mean_test_loss_p: {mean_test_loss_p}  mean_test_loss_r: {mean_test_loss_r}")
     
     prediction_line, recovery_section = lines[0], sections[0]
     for i in range(1, len(lines)):
@@ -228,7 +229,7 @@ def test(data_path, test_dataloader, device, exp_name, tl_writer):
     mean_test_dist_p = 0
 
     for i in range(3):
-        prediction_line[:, i, :] = prediction_line[:, i, :] * (coordinate_weights[i] - coordinate_weights[i + 3]) + coordinate_weights[i + 3]
+        prediction_line[:, i, :] = prediction_line[:, i, :] * coordinate_weights[i] + test_dataloader.scale_factor[i + 3]
 
 
     mean_test_dist_last_point, max_test_dist_last_point, min_test_dist_last_point = 0, 0, 1 << 30
