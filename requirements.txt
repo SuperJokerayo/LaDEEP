@@ -9,3 +9,4 @@ torchaudio==2.1.2
 torchinfo==1.8.0
 torchvision==0.16.2
 tqdm==4.65.0
+packaging==24.0

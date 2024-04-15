@@ -1,5 +1,5 @@
 # LaDEEP
-This is the implement of "LaDEEP: Machine Learning for Large Deformation of Elastic-Plastic Solid"
+This is the implement of "[LaDEEP: Machine Learning for Large Deformation of Elastic-Plastic Solid](https://pdf.ac/2cRlLd)"
 
 ## Usage
 
@@ -46,7 +46,7 @@ Then you can monitor the training and evaluation details by open `localhost:8888
 
 ### Test
 
-We have provided model weights for [download]().
+We have provided model weights for [download](https://drive.google.com/drive/folders/19uu2Eysjok70-nsGtstylcigOjLyRYoP?usp=sharing). You can download and put them in `./checkpoints/train_{mode_id}` folder.
 
 To test the model, we first need to change the mode in `config.ini`:
 
@@ -54,10 +54,12 @@ To test the model, we first need to change the mode in `config.ini`:
 mode = test
 ```
 
-and the `mode_id` is the folder `./checkpoints/train_{mode_id}` that saves the checkpoints you wanna use. Then test the model:
+and the `mode_id` is the folder `./checkpoints/train_{mode_id}` where saves the checkpoints you wanna use. Then test the model:
 
 ```
 python main.py
 ```
 
-and the results will be save in `./data/prediction_results/test_{mode_id}`.
+and the results, MAD and TE will be save in `./data/prediction_results/test_{mode_id}`. 
+
+If you want to calculate IoU 3D, you need to install [Siemens NX](https://plm.sw.siemens.com/en-US/nx/). Then add the fold where saves prediction results to `root` list in  `./scripts/iou_3d/iou_3d_eval.py` and play the file by utilizing NX's playback function.

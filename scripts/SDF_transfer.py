@@ -102,14 +102,7 @@ def main(read_path, save_path):
     comm.Barrier()
 
 if  __name__ == "__main__":
-    for i in range(3, 4):
-        for j in range(27, 400 + 1):
-            print(f"processing type_{i} {j:0>4}.jpg...")
-            sys.stdout.flush()
-            read_path = rf"./strip_section_jpg/type_{i}/{j:0>4}.jpg"
-            save_path = rf"./strip_section_sdf/type_{i}/{j:0>4}.txt"
-            main(read_path, save_path)
-    for i in range(4, 5):
+    for i in range(1, 5):
         for j in range(1, 400 + 1):
             print(f"processing type_{i} {j:0>4}.jpg...")
             sys.stdout.flush()

@@ -177,8 +177,8 @@ def test(data_path, test_dataloader, device, exp_name, tl_writer):
 
     net = LaDEEP().to(device)
     checkpoint_path = exp_name.replace("test", "train")
-    checkpoint_p_path = f"./checkpoints/{checkpoint_path}/best_model_p.pth"
-    checkpoint_r_path = f"./checkpoints/{checkpoint_path}/best_model_r.pth"
+    checkpoint_p_path = f"./checkpoints/{checkpoint_path}/best_p_model.pth"
+    checkpoint_r_path = f"./checkpoints/{checkpoint_path}/best_r_model.pth"
 
     parameters_p = torch.load(checkpoint_p_path, map_location = device)
     parameters_r = torch.load(checkpoint_r_path, map_location = device)
