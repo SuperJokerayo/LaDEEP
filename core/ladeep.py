@@ -4,7 +4,7 @@ from .cle_and_clr import Characteristic_Line_Extractor, Characteristic_Line_Reve
 from .cse_and_csr import Cross_Section_Extractor, Cross_Section_Reverser, Cross_Section_Reshaper
 from .off import Object_Feature_Fusioner
 from .mpe import Motion_Parameters_Extractor
-from .dp import Loading_Module, Unloading_Module
+from .dp import Load_Module, Unload_Module
 
 class LaDEEP(nn.Module):
     def __init__(self):
@@ -16,8 +16,8 @@ class LaDEEP(nn.Module):
         self.csr_mlp = Cross_Section_Reshaper()
         self.off = Object_Feature_Fusioner()
         self.mpe = Motion_Parameters_Extractor()
-        self.dp_loading = Loading_Module()
-        self.dp_unloading = Unloading_Module()
+        self.dp_load = Load_Module()
+        self.dp_unload = Unload_Module()
         self.clr = Characteristic_Line_Reverser()
         self._initialize()
 
@@ -25,15 +25,20 @@ class LaDEEP(nn.Module):
         mould = self.cle_for_mould(mould)
         strip = self.cle_for_strip(strip)
         section = self.cse(section)
-        recovery = self.csr(section)
+        recover_section = self.csr(section)
         section = self.csr_mlp(section)
         strip = self.off(strip, section)
         params = self.mpe(params)
-        strip = self.dp_loading(params, strip, mould)
-        strip = self.dp_unloading(strip)
+        strip = self.dp_load(params, strip, mould)
+        output_load = strip
+        strip = self.dp_unload(strip)
+        output_unload = strip
         strip = self.clr(strip)
 
-        return strip, recovery
+        if self.training:
+            return strip, recover_section
+        else:
+            return strip, recover_section, output_load, output_unload
     
     def _initialize(self):
         for m in self.modules():

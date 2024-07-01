@@ -16,6 +16,7 @@ from core.losses import loss_p, loss_r
 
 from utils.tensorboard_logging import Tensorboard_Logging
 from utils.diff_recover import diff_recover
+from utils.t_SNE import cal_tSNE
 
 
 def train(train_dataloader, eval_dataloader, device, exp_name, tl_writer):
@@ -119,7 +120,7 @@ def train(train_dataloader, eval_dataloader, device, exp_name, tl_writer):
             mean_eval_loss_r = 0
             for i, eval_data in enumerate(eval_datas):
                 strip, mould, section, params, springback = list(map(lambda x: x.float().to(device), eval_data))
-                prediction, recover_section = net(strip, mould, section, params)
+                prediction, recover_section, _, _ = net(strip, mould, section, params)
                 eval_loss_p = loss_p(springback, prediction, coordinate_weights)
                 eval_loss_r = loss_r(section, recover_section)
 
@@ -194,7 +195,8 @@ def test(data_path, test_dataloader, device, exp_name, tl_writer):
 
     len_test_datas = len(test_datas)
 
-    lines, sections = [], []
+    prediction_lines, recover_sections = [], []
+    outputs_load, outputs_unload = [], []
     net = net.eval()
     with torch.no_grad():
         mean_test_loss_p = 0
@@ -202,37 +204,47 @@ def test(data_path, test_dataloader, device, exp_name, tl_writer):
 
         for i, test_data in enumerate(test_datas):
             strip, mould, section, params, springback = list(map(lambda x: x.float().to(device), test_data))
-            prediction, recover_section = net(strip, mould, section, params)
+            prediction, recover_section, output_load, output_unload = net(strip, mould, section, params)
 
             test_loss_p = loss_p(springback, prediction, coordinate_weights)
             test_loss_r = loss_r(section, recover_section)
 
             mean_test_loss_p += test_loss_p.data
             mean_test_loss_r += test_loss_r.data
-            lines.append(prediction.cpu().detach().numpy())
-            sections.append(recover_section.cpu().detach().numpy())
+            prediction_lines.append(prediction.cpu().detach().numpy())
+            recover_sections.append(recover_section.cpu().detach().numpy())
+            outputs_load.append(output_load.cpu().detach().numpy())
+            outputs_unload.append(output_unload.cpu().detach().numpy())
 
         mean_test_loss_p /= len_test_datas
         mean_test_loss_r /= len_test_datas
 
         logging.info(f"mean_test_loss_p: {mean_test_loss_p}  mean_test_loss_r: {mean_test_loss_r}")
 
-    prediction_line, recovery_section = lines[0], sections[0]
-    for i in range(1, len(lines)):
-        prediction_line = np.concatenate((prediction_line, lines[i]), axis = 0)
-        recovery_section = np.concatenate((recovery_section, sections[i]), axis = 0)
+    prediction_lines = np.concatenate(prediction_lines, axis = 0)
+    recover_sections = np.concatenate(recover_sections, axis = 0)
+    outputs_load = np.concatenate(outputs_load, axis = 0)
+    outputs_unload = np.concatenate(outputs_unload, axis = 0)
+    cross_section_labels = []
+    n_samples_per_class = len_test_datas // test_dataloader.n_type
+    for i in range(test_dataloader.n_type):
+        cross_section_labels += [f"type_{i + 1}"] * n_samples_per_class
+
+    cal_tSNE(outputs_load, cross_section_labels)
+    cal_tSNE(outputs_unload, cross_section_labels)
+
     mean_test_dist_p = 0
 
     for i in range(3):
-        prediction_line[:, i, :] = prediction_line[:, i, :] * coordinate_weights[i] + test_dataloader.scale_factor[
+        prediction_lines[:, i, :] = prediction_lines[:, i, :] * coordinate_weights[i] + test_dataloader.scale_factor[
             i + 3]
 
     mean_test_dist_last_point, max_test_dist_last_point, min_test_dist_last_point = 0, 0, 1 << 30
 
     max_sample_mean_test_dist_p, min_sample_mean_test_dist_p = 0, 1 << 30
 
-    for j in range(prediction_line.shape[0]):
-        pred = diff_recover(prediction_line[j, :, :].T)
+    for j in range(prediction_lines.shape[0]):
+        pred = diff_recover(prediction_lines[j, :, :].T)
         with open(test_dataloader.springback_line_paths[j]) as f:
             points = np.array(
                 list(
@@ -276,13 +288,13 @@ def test(data_path, test_dataloader, device, exp_name, tl_writer):
             os.mkdir(type_path)
 
         file_path = os.path.join(type_path, f"{test_dataloader.mould_line_paths[j][-8: -3]}.jpg")
-        sec = recovery_section[j, :, :, :] * 255
+        sec = recover_sections[j, :, :, :] * 255
         sec = np.transpose(sec, (1, 2, 0)).astype(np.uint8).squeeze()
         sec = Image.fromarray(sec)
         sec.save(file_path)
 
-    mean_test_dist_p /= prediction_line.shape[0]
-    mean_test_dist_last_point /= prediction_line.shape[0]
+    mean_test_dist_p /= prediction_lines.shape[0]
+    mean_test_dist_last_point /= prediction_lines.shape[0]
     logging.info(f"mean_test_dist_last_point: {mean_test_dist_last_point}")
     logging.info(f"max_test_dist_last_point: {max_test_dist_last_point}")
     logging.info(f"min_test_dist_last_point: {min_test_dist_last_point}")

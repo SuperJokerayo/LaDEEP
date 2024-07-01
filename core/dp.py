@@ -157,7 +157,7 @@ class Deformation_Module(nn.Module):
             y = layer(x, y, z)
         return y
 
-class Loading_Module(nn.Module):
+class Load_Module(nn.Module):
     def __init__(
         self, 
         num_layers = 2, 
@@ -178,7 +178,7 @@ class Loading_Module(nn.Module):
         return self.loading_module(params, strip, mould)
 
 
-class Unloading_Module(nn.Module):
+class Unload_Module(nn.Module):
     def __init__(
         self, 
         dropout = 0, 
@@ -203,10 +203,10 @@ if __name__ == "__main__":
     y = torch.randn(30, 64, 64)
     z = torch.randn(30, 64, 64)
 
-    loading_module = Loading_Module()
+    load_module = Load_Module()
 
-    output_loading = loading_module(x, y, z)
+    output_loading = load_module(x, y, z)
 
-    unloading_module = Unloading_Module()
+    unload_module = Unload_Module()
 
-    output_springback = unloading_module(output_loading)
+    output_springback = unload_module(output_loading)

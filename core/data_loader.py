@@ -31,9 +31,9 @@ class LaDEEP_DataLoader(Dataset):
         if self.mode == "train":
             start, end = 0, int(n // 10 * 8)
         elif self.mode == "eval":
-            start, end = int(n // 10 * 8), int (n // 10 * 9)
+            start, end = int(n // 10 * 8), int(n // 10 * 9)
         elif self.mode == "test":
-            start, end = int (n // 10 * 9), n
+            start, end = int(n // 10 * 9), n
         else:
             raise("Mode type error!")
         return start, end
