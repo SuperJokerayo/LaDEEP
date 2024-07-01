@@ -91,7 +91,7 @@ class Cross_Section_Reverser(nn.Module):
         x = nn.functional.interpolate(x, scale_factor = (2, 1), mode = "bilinear")
         x = self.decoder_rear(x)
 
-        return x, mean, logvar
+        return x
 
 class Cross_Section_Reshaper(nn.Module):
     def __init__(self):
